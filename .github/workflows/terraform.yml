@@ -1,0 +1,103 @@
+#Github Actions to trigger Terraform Cloud and provision using AZ
+name: 'Deploy Terraform'
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - '_build_flag'
+
+jobs:
+  terraform:
+    name: 'Deploy and Onboard'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    # Checkout the repository to the GitHub Actions runner
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+
+    # Install the Azure CLI and Login
+
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+
+
+    # Onboard to Snyk Cloud  
+ 
+    - name: Onboard Cloud Environment to Snyk Cloud
+      shell: bash
+      run: |
+        mkdir temp
+        cd temp
+        curl -X POST \
+        'https://api.snyk.io/rest/orgs/${{ secrets.SNYK_ORG }}/cloud/permissions?version=2023-03-08~beta' \
+        -H 'Authorization: token ${{ secrets.SNYK_TOKEN }}' \
+        -H 'Content-Type:application/vnd.api+json' -d '{
+            "data": {
+                "attributes": {
+                    "type": "tf",
+                    "platform": "azure"
+                },
+                "type": "permissions"
+            }
+        }' | jq -r .data.attributes.data > snyk_provision.tf
+        terraform init
+        terraform apply -auto-approve
+        terraform output -json 
+        sleep 10
+
+
+
+    - name: Terraform Init
+      run: terraform init
+
+    
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+
+    #API Call to Terraform.io to get app-services name
+    - name: Get App Variable Name
+      run: |
+           out=$(curl --silent --header "Authorization: Bearer ${TF_API_TOKEN}" --header "Content-Type: application/vnd.api+json" https://app.terraform.io/api/v2/workspaces/${TF_WORKSPACE_ID}/vars | jq -c --arg key "victim-company" '.data[].attributes | select (.key=="victim_company") | .value' | tr -d \")
+           echo ::set-env name=APP_NAME::$(echo "${out}-app-service")
+           echo ::set-env name=RG::$(echo "${out}-rg")
+      
+      #Use AZ to provision webapp     
+    - name: Deploy app using AZ
+      env:
+        AZ_ID: ${{ secrets.AZ_ID }}
+        AZ_SECRET: ${{ secrets.AZ_SECRET }}
+        AZ_TENANT: ${{ secrets.AZ_TENANT }}
+      run: |
+           #Login to Azure
+           az login  --service-principal -u ${AZ_ID} -p ${AZ_SECRET} -t ${AZ_TENANT}
+           az webapp deployment source config --name ${APP_NAME} --resource-group ${RG} --repo-url https://github.com/metalstormbass/VulnerableWebApp.git --branch master --manual-integration                     
+           az webapp config set -g ${RG} -n ${APP_NAME} --startup-file /home/site/wwwroot/VulnerableWebApp/startup.sh
+
+           
+         
+           
+
+    
+   
+
+         
+           
+
+    
+   
