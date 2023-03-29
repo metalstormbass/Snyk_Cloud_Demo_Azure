@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - main
+    paths:
+    - '_build_flag'
 
 jobs:
   terraform:
@@ -50,6 +52,10 @@ jobs:
         -H 'Content-Type:application/vnd.api+json' -d '{
             "data": {
                 "attributes": {
+                  "options": {
+                    "subscription_id": "YOUR-SUBSCRIPTION-ID",
+                    "tenant_id": "YOUR-TENANT-ID"
+                  },
                     "type": "tf",
                     "platform": "azure"
                 },
