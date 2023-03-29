@@ -15,6 +15,10 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+   # These variables are required
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
 
     # Checkout the repository to the GitHub Actions runner
 
@@ -63,31 +67,31 @@ jobs:
 
 
 
-    - name: Terraform Init
-      run: terraform init
+   # - name: Terraform Init
+   #   run: terraform init
 
     
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+   # - name: Terraform Apply
+   #   run: terraform apply -auto-approve
 
     #API Call to Terraform.io to get app-services name
-    - name: Get App Variable Name
-      run: |
-           out=$(curl --silent --header "Authorization: Bearer ${TF_API_TOKEN}" --header "Content-Type: application/vnd.api+json" https://app.terraform.io/api/v2/workspaces/${TF_WORKSPACE_ID}/vars | jq -c --arg key "victim-company" '.data[].attributes | select (.key=="victim_company") | .value' | tr -d \")
-           echo ::set-env name=APP_NAME::$(echo "${out}-app-service")
-           echo ::set-env name=RG::$(echo "${out}-rg")
+    #- name: Get App Variable Name
+    #  run: |
+    #       out=$(curl --silent --header "Authorization: Bearer ${TF_API_TOKEN}" --header "Content-Type: application/vnd.api+json" https://app.terraform.io/api/v2/workspaces/${TF_WORKSPACE_ID}/vars | jq -c --arg key "victim-company" '.data[].attributes | select (.key=="victim_company") | .value' | tr -d \")
+    #       echo ::set-env name=APP_NAME::$(echo "${out}-app-service")
+    #       echo ::set-env name=RG::$(echo "${out}-rg")
       
       #Use AZ to provision webapp     
-    - name: Deploy app using AZ
-      env:
-        AZ_ID: ${{ secrets.AZ_ID }}
-        AZ_SECRET: ${{ secrets.AZ_SECRET }}
-        AZ_TENANT: ${{ secrets.AZ_TENANT }}
-      run: |
+    #- name: Deploy app using AZ
+    #  env:
+    #    AZ_ID: ${{ secrets.AZ_ID }}
+    #    AZ_SECRET: ${{ secrets.AZ_SECRET }}
+    #    AZ_TENANT: ${{ secrets.AZ_TENANT }}
+    #  run: |
            #Login to Azure
-           az login  --service-principal -u ${AZ_ID} -p ${AZ_SECRET} -t ${AZ_TENANT}
-           az webapp deployment source config --name ${APP_NAME} --resource-group ${RG} --repo-url https://github.com/metalstormbass/VulnerableWebApp.git --branch master --manual-integration                     
-           az webapp config set -g ${RG} -n ${APP_NAME} --startup-file /home/site/wwwroot/VulnerableWebApp/startup.sh
+    #       az login  --service-principal -u ${AZ_ID} -p ${AZ_SECRET} -t ${AZ_TENANT}
+    #       az webapp deployment source config --name ${APP_NAME} --resource-group ${RG} --repo-url https://github.com/metalstormbass/VulnerableWebApp.git --branch master --manual-integration                     
+    #       az webapp config set -g ${RG} -n ${APP_NAME} --startup-file /home/site/wwwroot/VulnerableWebApp/startup.sh
 
            
          
