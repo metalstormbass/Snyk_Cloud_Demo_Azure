@@ -1,6 +1,4 @@
-#Github Actions to trigger Terraform Cloud and provision using AZ
-name: 'Deploy Terraform'
-
+name: 'Build and Deploy Demo Environment'
 on:
   push:
     branches:
