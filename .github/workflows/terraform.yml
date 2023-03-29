@@ -25,18 +25,14 @@ jobs:
       uses: actions/checkout@v2
 
 
-    # Install the Azure CLI and Login
-
-    - name: 'Az CLI login'
-      uses: azure/login@v1
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
+
+ 
+    - name: AZ Login
+      shell: bash
+      run: |
+        az login  --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} -t ${{ secrets.AZURE_TENANT_ID }}
 
 
     # Onboard to Snyk Cloud  
@@ -53,8 +49,8 @@ jobs:
             "data": {
                 "attributes": {
                   "options": {
-                    "subscription_id": "YOUR-SUBSCRIPTION-ID",
-                    "tenant_id": "YOUR-TENANT-ID"
+                    "subscription_id": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+                    "tenant_id": "${{ secrets.AZURE_TENANT_ID }}"
                   },
                     "type": "tf",
                     "platform": "azure"
