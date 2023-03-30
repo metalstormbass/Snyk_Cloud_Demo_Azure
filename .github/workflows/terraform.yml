@@ -29,39 +29,39 @@ jobs:
       uses: hashicorp/setup-terraform@v1
 
  
-    - name: AZ Login
-      shell: bash
-      run: |
-        az login  --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} -t ${{ secrets.AZURE_TENANT_ID }}
+   # - name: AZ Login
+   #   shell: bash
+   #   run: |
+   #     az login  --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} -t ${{ secrets.AZURE_TENANT_ID }}
 
 
     # Onboard to Snyk Cloud  
  
-    - name: Onboard Cloud Environment to Snyk Cloud
-      shell: bash
-      run: |
-        mkdir temp
-        cd temp
-        curl -X POST \
-        'https://api.snyk.io/rest/orgs/${{ secrets.SNYK_ORG }}/cloud/permissions?version=2023-03-08~beta' \
-        -H 'Authorization: token ${{ secrets.SNYK_TOKEN }}' \
-        -H 'Content-Type:application/vnd.api+json' -d '{
-            "data": {
-                "attributes": {
-                  "options": {
-                    "subscription_id": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-                    "tenant_id": "${{ secrets.AZURE_TENANT_ID }}"
-                  },
-                    "type": "tf",
-                    "platform": "azure"
-                },
-                "type": "permissions"
-            }
-        }' | jq -r .data.attributes.data > snyk_provision.tf
-        terraform init
-        terraform apply -auto-approve
-        terraform output -json 
-        sleep 10
+    #- name: Onboard Cloud Environment to Snyk Cloud
+    #  shell: bash
+    #  run: |
+    #    mkdir temp
+    #    cd temp
+    #    curl -X POST \
+    #    'https://api.snyk.io/rest/orgs/${{ secrets.SNYK_ORG }}/cloud/permissions?version=2023-03-08~beta' \
+    #    -H 'Authorization: token ${{ secrets.SNYK_TOKEN }}' \
+    #    -H 'Content-Type:application/vnd.api+json' -d '{
+    #        "data": {
+    #            "attributes": {
+    #              "options": {
+    #                "subscription_id": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+    #                "tenant_id": "${{ secrets.AZURE_TENANT_ID }}"
+    #              },
+    #                "type": "tf",
+    #                "platform": "azure"
+    #            },
+    #            "type": "permissions"
+    #        }
+    #    }' | jq -r .data.attributes.data > snyk_provision.tf
+    #    terraform init
+    #    terraform apply -auto-approve
+    #    terraform output -json 
+    #    sleep 10
 
 
 
